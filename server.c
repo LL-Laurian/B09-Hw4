@@ -68,9 +68,6 @@ void handle_client(int cfd, const char *file_path) {
 
     int bytes_read = read(cfd, name, NAME_LEN_MAX);
     //printf( "name: %s\n", name);
-    if (strlen(name) < 1){
-        close(cfd);
-    }
     //name[bytes_read-1] = '\0'; // Null-terminate the name
     //if (bytes_read > 0) {
         name[bytes_read] = '\0';

@@ -1,0 +1,3 @@
+/cmshome/lilangxi/cscb09s24_space/A4/cmake-build-release-remote-host/CMakeFiles/A4.dir
+/cmshome/lilangxi/cscb09s24_space/A4/cmake-build-release-remote-host/CMakeFiles/edit_cache.dir
+/cmshome/lilangxi/cscb09s24_space/A4/cmake-build-release-remote-host/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/A4.dir/client.c.o CMakeFiles/A4.dir/server.c.o -o A4 

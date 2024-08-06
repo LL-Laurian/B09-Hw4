@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      lang="en"
+      xml:lang="en"
+>
+<head>
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes" />
+<title>CSCB09 2024 Summer Assignment 4</title>
+<style type="text/css">
+h1, h2, h3 { color: blue; }
+dfn { font-style: normal; font-weight: bold; color: blue; }
+table { border-collapse: collapse; }
+th, td { border: 1px solid grey; padding: 0em 0.5em; }
+
+/* Code excerpts from loadable source files. */
+div.excerpt {
+  margin: 1em 0em 1em; /* top, left/right, bottom */
+}
+div.excerpt > span {
+  font-size: smaller;
+  background-color: #f0f0f0;
+  padding: 0.25em;
+}
+div.excerpt > pre {
+  background-color: #f0f0f0;
+  overflow: auto;
+  padding: 0.5em;
+  margin: 0px;
+}
+
+/* popup hidable table of contents, and the button to pop it up. */
+#tocdyn {
+  position: fixed;
+  width: 15em;
+  top: 0;
+  right: 0;
+  padding: 8px;
+  border-left: blue solid 1px;
+  border-bottom: blue solid 1px;
+  background-color: white;
+  color: black;
+  font-family: sans-serif;
+  visibility: hidden; /* initial value, to be overruled by javascript */
+}
+#tocbutton {
+  position: fixed;
+  top: 0;
+  right: 0;
+  opacity: 0.9;
+}
+#tocdyn > h1 {
+  font-size: 1em;
+  font-weight: bold;
+  margin-top: 0;
+}
+#tocdyn * {
+  text-align: left;
+}
+#tocdyn ul {
+  list-style-type: none;
+}
+#tocdyn > ul {
+  padding-left: 0;
+}
+#tocdyn > ul ul {
+  padding-left: 1em;
+}
+#tocdyn li {
+  margin-top: 0.3em;
+  margin-bottom: 0.3em;
+}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+ul.task-list{list-style: none;}
+</style>
+<script type="text/javascript">
+function show_toc() {
+  document.getElementById("tocdyn").style.visibility = "visible";
+}
+function hide_toc() {
+  document.getElementById("tocdyn").style.visibility = "";
+}
+</script>
+</head>
+<body id="top">
+<header class="title">
+<h1 class="title">CSCB09 2024 Summer Assignment 4</h1>
+</header>
+<div id="tocbutton"><button type="button" onclick="show_toc();">Table of Contents</button></div>
+<nav id="tocdyn" role="doc-toc" onclick="hide_toc();">
+<p><a href="#top">Top</a></p>
+<ul>
+<li><a href="#remote-sunspot-query-service"
+id="toc-remote-sunspot-query-service">Remote Sunspot Query
+Service</a></li>
+<li><a href="#client-5-marks" id="toc-client-5-marks">Client (5
+marks)</a></li>
+<li><a href="#server-10-marks" id="toc-server-10-marks">Server (10
+marks)</a></li>
+<li><a href="#sample-clients-and-servers"
+id="toc-sample-clients-and-servers">Sample Clients And Servers</a></li>
+<li><a href="#debugging-and-error-messages"
+id="toc-debugging-and-error-messages">Debugging And Error
+Messages</a></li>
+<li><a href="#good-citizen-policy"
+id="toc-good-citizen-policy">Good-Citizen Policy</a></li>
+<li><a href="#testing-tips" id="toc-testing-tips">Testing Tips</a>
+<ul>
+<li><a href="#randomize-port-number"
+id="toc-randomize-port-number">Randomize Port Number</a></li>
+<li><a href="#manual-testing-by-nc" id="toc-manual-testing-by-nc">Manual
+Testing by <code>nc</code></a></li>
+<li><a href="#mathlab-server-pc-client"
+id="toc-mathlab-server-pc-client">Mathlab Server, PC Client</a></li>
+<li><a href="#pc-server-mathlab-client"
+id="toc-pc-server-mathlab-client">PC Server, Mathlab Client</a></li>
+</ul></li>
+</ul>
+</nav>
+<div class="line-block">Due: August 7 11:59PM<br />
+This assignment is worth 10% of the course grade.</div>
+<p>This assignment is on network stream socket programming.</p>
+<p>As usual, you should aim for reasonably efficient algorithms and
+reasonably well-organized, well-factored, comprehensible code.</p>
+<p>Code correctness (mostly auto-marking) is worth 90% of the marks;
+code quality is worth 10%.</p>
+<h2 id="remote-sunspot-query-service">Remote Sunspot Query Service</h2>
+<p>The protocol in this assignment allows clients to look up sunspots of
+Solarflares customers from a server. In short, a client sends a name to
+the server, and the server looks up in its customer file and replies
+with sunspots or not-found.</p>
+<p>Since stream sockets are used, we can’t rely on packet boundaries for
+message boundaries. We use a newline to mark the end of a message.</p>
+<p>Here is the detailed protocol sequence (assuming neither clients nor
+servers malfunction):</p>
+<ol type="1">
+<li><p>The client connects to the server.</p></li>
+<li><p>Steps 3-4 below can happen 0 or more times before step
+5.</p></li>
+<li><p>The client sends a name (1 to 29 bytes) followed by a
+newline.</p></li>
+<li><p>If the name is found in the server’s customer file, the server
+sends the sunspot amount as a decimal string (at most 10 digits)
+followed by a newline.</p>
+<p>If the name is not found, the server sends <code>none</code> followed
+by a newline.</p></li>
+<li><p>The client disconnects.</p></li>
+</ol>
+<h2 id="client-5-marks">Client (5 marks)</h2>
+<p>(Please submit client.c.)</p>
+<p>Implement a client program that takes names from stdin and queries
+the server for sunspots.</p>
+<p>There are 2 command line arguments: server address in dot notation,
+server port number. (When marking, they are always valid.)</p>
+<p>If connection is unsuccessful, you may print an error message of your
+choice to stderr. Exit with exit code 1.</p>
+<p>If connection is successful:</p>
+<ol type="1">
+<li><p>Print <code>Ready</code> on its own line to stdout. (So the user
+knows.)</p></li>
+<li><p>Read a line from stdin. You may assume that it is at most 30
+bytes including newline.</p></li>
+<li><p>If EOF or a blank line (just a newline and no other character),
+close the connection and exit with exit code 0.</p></li>
+<li><p>Send the name to the server. Print the server’s reply to stdout.
+Don’t print more than one newline.</p></li>
+<li><p>Go to 2.</p></li>
+</ol>
+<p>The lack of prompting is to simplify automarking. If you prefer to
+add prompting, please use stderr.</p>
+<p>Here is a sample session (also in sample-in.txt and
+sample-out.txt):</p>
+<table>
+<thead>
+<tr class="header">
+<th>stdin</th>
+<th>stdout</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td><code>Ready</code></td>
+</tr>
+<tr class="even">
+<td><code>Archimedes</code></td>
+<td><code>290</code></td>
+</tr>
+<tr class="odd">
+<td><code>Trebla Lai</code></td>
+<td><code>none</code></td>
+</tr>
+<tr class="even">
+<td><code>Dennis Ritchie</code></td>
+<td><code>1926</code></td>
+</tr>
+</tbody>
+</table>
+<p>Note that there is no blank line after the sunspot amount or
+<code>none</code>.</p>
+<p>Server malfunctions happen all the time due to bugs and service
+disruptions. Here are the scenerios you must handle as prescribed:</p>
+<ul>
+<li><p>Connection failure is covered above.</p></li>
+<li><p>Error or EOF when sending to or receiving from server: This means
+unexpected disconnection. The client should exit with exit code 1. You
+may print error messages to stderr.</p></li>
+<li><p>After receiving 11 bytes from the server you still don’t see a
+newline: Server bug. The client should not treat it as a valid reply.
+The client should exit with exit code 1. You may print error messages to
+stderr.</p></li>
+</ul>
+<h2 id="server-10-marks">Server (10 marks)</h2>
+<p>(Please submit server.c.)</p>
+<p>Implement a server program that replies to client queries based on
+data in a customer file.</p>
+<p>There are 2 command line arguments: port number, pathname (of the
+customer file). When marking, they are always valid. <strong>The
+customer file may be read-only.</strong></p>
+<p>The format of the customer file is as in A2. (You may reuse code from
+your or my A2 solution. A shortened version of record.h with just the
+max name length and the struct will be present when marking—see starter
+files. You will not be able to submit record.c—transfer what you need to
+server.c.)</p>
+<p>The server should bind to the given port at address INADDR_ANY. We do
+expect this to fail all the time due to the “address already in use”
+error. If this happens, print an error message to stderr and exit with
+exit code 1.</p>
+<p>The server should be responsive to multiple existing and incoming
+clients concurrently, even when a bad client stalls and wants the server
+to wait forever; bad clients happen all the time by bad luck, bugs, or
+malice. Well-known approaches are: forking a child process for each
+client, so the parent is just an accept-fork loop; or multiplexing by
+<code>select()</code> or <code>epoll()</code>; or multi-threading. You
+may choose which approach you want. (Forking is the easiest.)</p>
+<p>The protocol specifies that it is the client that initiates
+disconnection. Therefore, the server side trying to send or receive then
+gets an error, EOF, or SIGPIPE. This is part of normal workflow; this is
+not supposed to bring down the server.</p>
+<p>If you use forking: Zombie processes should not happen. And yet, the
+parent process should not hang indefinitely to wait for a child to die,
+since it must also stay responsive to new connection requests.</p>
+<p>Busy polling is disallowed. Marking will be done under a tight limit
+on CPU time.</p>
+<p>Client malfunctions happen all the time, even more than server
+malfunctions. We expect the Internet to be full of both fools and
+trolls. Here are the scenerios you should handle as prescribed:</p>
+<ul>
+<li><p>Client disconnects prematurely: As covered above.</p></li>
+<li><p>After receiving 30 bytes from the client you still don’t see a
+newline: For simplicity, disconnect the client.</p></li>
+</ul>
+<h2 id="sample-clients-and-servers">Sample Clients And Servers</h2>
+<p>I will have sample clients and servers (exe only, clearly) available
+on Mathlab in /courses/courses/cscb09s24/laialber/a4/sample</p>
+<h2 id="debugging-and-error-messages">Debugging And Error Messages</h2>
+<p>If you like to print debugging or error messages for your own sake,
+please send them to stderr only.</p>
+<h2 id="good-citizen-policy">Good-Citizen Policy</h2>
+<p>Marks can be deducted from this assignment if, on the Mathlab server
+or BV lab PCs, you have left-over processes that have been consuming
+more than 24 hours of CPU time (the TIME field in ps, top, and
+htop).</p>
+<h2 id="testing-tips">Testing Tips</h2>
+<h3 id="randomize-port-number">Randomize Port Number</h3>
+<p>When you run a server on Mathlab, since everyone is doing the same,
+you should randomly choose a port number between 1024 and 65535. I
+recommend running /courses/courses/cscb09s24/laialber/a4/random-port to
+get one. (It doesn’t check actual availability, so if you still get
+“address in use”, just get another one.)</p>
+<h3 id="manual-testing-by-nc">Manual Testing by <code>nc</code></h3>
+<p>The <code>nc</code> program can let you manually act as one side to
+hand-test the other side. You enter to stdin what to send; you see
+received data on stdout. Quickstart:</p>
+<ul>
+<li><p>To act as a client:
+<code>nc [-v] [-q 1] DOTADDRESS PORT</code></p></li>
+<li><p>To act as a server:
+<code>nc [-v] [-q 1] -n -l [DOTADDRESS] PORT</code>. Note that this
+calls <code>accept()</code> only once, at the beginning. It only serves
+one client, then quits.</p></li>
+</ul>
+<h3 id="mathlab-server-pc-client">Mathlab Server, PC Client</h3>
+<p>Mathlab is behind a firewall. A firewall blocks most ports for
+safety, including ports we need for testing this assignment. ssh can
+help get past the firewall.</p>
+<p>If you have a server running on Mathlab at port sssss, e.g.:</p>
+<pre><code>mathlab$ /path/to/server sssss /path/to/customer-file</code></pre>
+<p>Then “ssh local forwarding” allows you to run a client on your PC.
+Pick a random port number xxxxx (criterion: available on your PC). Then
+the ssh command goes like:</p>
+<pre><code>my-pc$ ssh -L xxxxx:127.0.0.1:sssss utorid@mathlab.utsc.utoronto.ca</code></pre>
+<p>Tell your client on your PC that the server address and port are:</p>
+<pre><code>my-pc$ /path/to/client 127.0.0.1 xxxxx</code></pre>
+<h3 id="pc-server-mathlab-client">PC Server, Mathlab Client</h3>
+<p>Your home router has a firewall; Windows adds an extra one. A
+firewall blocks most ports for safety, including ports we need for
+testing this assignment. ssh can help get past the firewalls.</p>
+<p>If you have a server running on your PC at port sssss, e.g.:</p>
+<pre><code>my-pc$ /path/to/server sssss /path/to/customer-file</code></pre>
+<p>Then “ssh remote forwarding” allows you to run a client on Mathlab.
+Pick a random port number xxxxx (criterion: available on Mathlab). Then
+the ssh command goes like:</p>
+<pre><code>my-pc$ ssh -R xxxxx:127.0.0.1:sssss utorid@mathlab.utsc.utoronto.ca</code></pre>
+<p>Tell your client on Mathlab that the server address and port are:</p>
+<pre><code>mathlab$ /path/to/client 127.0.0.1 xxxxx</code></pre>
+</body>
+</html>

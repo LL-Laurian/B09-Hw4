@@ -64,7 +64,7 @@ int main(int argc, char **argv)
         name[name_len - 1] = '\0';
         //fprintf(stdout, "name: %s\n", name);
 
-        if (write(cfd, name, MAX_NAME_LENGTH) == -1) {
+        if (write(cfd, name, name_len) == -1) {
             perror("write");
             close(cfd);
             return 1;

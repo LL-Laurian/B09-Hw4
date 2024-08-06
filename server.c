@@ -24,6 +24,26 @@ int get_sunspots(FILE *f, const char *name, unsigned short *psunspots)
     return 0;
 }
 
+int print_sunspot(const char *file_path, char* name){
+    FILE *f = fopen(file_path, "r+b");
+    if (f == NULL) {
+        perror("fopen");
+        return 1;
+    }
+
+    // Get Dennis Ritchie sunspots
+    unsigned short y;
+    if (get_sunspots(f, name, &y)) {
+        //printf("%s has %hu sunspots\n",name, y);
+        sprintf(name, "%u\n", y);
+    } else {
+        //printf("%s not found\n", name);
+        sprintf(name, "none\n");
+    }
+    fclose(f);
+    return 0;
+}
+
 void handle_sigterm(int sig) {
     (void)sig; // To avoid unused parameter warning
     keep_running = 0; // Set flag to exit the loop
@@ -42,33 +62,40 @@ void reap_zombies(int signum) {
     while (waitpid(-1, NULL, WNOHANG) > 0);
 }
 
-void handle_client(int cfd, FILE *file) {
+void handle_client(int cfd, const char *file_path) {
     char name[NAME_LEN_MAX + 1];
     unsigned short sunspots;
-    ssize_t bytes_read;
-    int total_bytes_read = 0;
 
-    // Read name from client
-    while (total_bytes_read < NAME_LEN_MAX && (bytes_read = read(cfd, name + total_bytes_read, NAME_LEN_MAX - total_bytes_read)) > 0) {
-        total_bytes_read += bytes_read;
-        if (name[total_bytes_read - 1] == '\n') {
-            break;
-        }
+    int bytes_read = read(cfd, name, NAME_LEN_MAX);
+    //printf( "name: %s\n", name);
+    if (strlen(name) < 1){
+        close(cfd);
     }
-    if (bytes_read <= 0) {
-        return; // Error or client disconnected
-    }
-    name[total_bytes_read] = '\0'; // Null-terminate the name
+    //name[bytes_read-1] = '\0'; // Null-terminate the name
+    //if (bytes_read > 0) {
+        name[bytes_read] = '\0';
+        //FILE *file = fopen(file_path, "rb");
+        //if (!file) {
+            //strcpy(name, "Error opening");
+        //}
+        //else {
+            //fprintf(stdout, "name %s\n", name);
+            print_sunspot(file_path, name);
 
-    if (get_sunspots(file, name, &sunspots)) {
-        snprintf(name, sizeof(name), "%u\n", sunspots); // Include newline for consistency
-    } else {
-        snprintf(name, sizeof(name), "none\n");
-    }
+            //if (get_sunspots(file, name, &sunspots)) {
+                //sprintf(name, "%u\n", sunspots); // Include newline for consistency
+            //} else {
+                //sprintf(name, "none\n");
+            //}
+            //fclose(file);
+        //}
 
-    // Send response to client
-    write(cfd, name, strlen(name));
+        // Send response to client
+        write(cfd, name, strlen(name));
+    //}
+    close(cfd);
 }
+
 
 int main(int argc, char **argv) {
     if (argc != 3) {
@@ -76,6 +103,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    //print_sunspot(argv[2], "Dennis Ritchie");
     int server_port = atoi(argv[1]);
     int sfd;
     struct sockaddr_in a;
@@ -113,17 +141,13 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    FILE *file = fopen(argv[2], "r+");
-    if (!file) {
-        perror("fopen");
-        close(sfd);
-        return 1;
-    }
     signal(SIGCHLD, reap_zombies);
     struct sockaddr_in ca;
     socklen_t sinlen = sizeof(ca);
     int cfd = accept(sfd, (struct sockaddr *)&ca, &sinlen);
     // Setup signal handler to reap zombies
+
+    int count =0;
 
     while (keep_running) {
 
@@ -140,9 +164,10 @@ int main(int argc, char **argv) {
         if (fork() == 0) {
             // Child process
             close(sfd); // Child doesn't need the listening socket
-            handle_client(cfd, file);
-            close(cfd);
-            exit(0);
+            handle_client(cfd, argv[2]);
+            count++;
+            //printf("the number of running time: %d\n", count);
+            return 0;
         }
 
         // Parent process
@@ -152,7 +177,6 @@ int main(int argc, char **argv) {
 
     // Cleanup
     close(cfd);
-    fclose(file);
     close(sfd);
     return 0;
 }

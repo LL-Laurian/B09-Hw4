@@ -55,9 +55,9 @@ int main(int argc, char **argv)
         }
 
         // Remove trailing newline if present
-        if (name[name_len - 1] == '\n') {
-            name[name_len - 1] = '\0';
-        }
+
+        name[name_len - 1] = '\0';
+        //fprintf(stdout, "name: %s\n", name);
 
         if (write(cfd, name, MAX_NAME_LENGTH) == -1) {
             perror("write");
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
         }
 
         ssize_t bytes_read = read(cfd, reply, MAX_REPLY_LENGTH);
-        fprintf(stdout,"bytes-read %ld\n", bytes_read);
+        //fprintf(stdout,"bytes-read %ld\n", bytes_read);
         if (bytes_read == -1) {
             perror("read error");
             close(cfd);
@@ -75,11 +75,11 @@ int main(int argc, char **argv)
             fprintf(stderr, "Server closed connection unexpectedly.\n");
             close(cfd);
             return 1;
-        }  else if (reply[bytes_read -1] != '\n' ) {
-            fprintf(stderr, "Server bug.\n");
-            close(cfd);
-            return 1;
-        }
+        }  //else if (reply[bytes_read -1] != '\n' ) {
+            //fprintf(stderr, "Server bug.\n");
+            //close(cfd);
+            //return 1;
+        //}
         reply[bytes_read-1] = '\0';
 
         printf("%s\n", reply);

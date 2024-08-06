@@ -54,6 +54,11 @@ int main(int argc, char **argv)
             return 0;
         }
 
+        if (name[name_len-1] != '\n') {
+            close(cfd);
+            return 0;
+        }
+
         // Remove trailing newline if present
 
         name[name_len - 1] = '\0';
@@ -75,11 +80,11 @@ int main(int argc, char **argv)
             fprintf(stderr, "Server closed connection unexpectedly.\n");
             close(cfd);
             return 1;
-        }  //else if (reply[bytes_read -1] != '\n' ) {
-            //fprintf(stderr, "Server bug.\n");
-            //close(cfd);
-            //return 1;
-        //}
+        }  else if (reply[bytes_read -1] != '\n' ) {
+            fprintf(stderr, "Server bug.\n");
+            close(cfd);
+            return 1;
+        }
         reply[bytes_read-1] = '\0';
 
         printf("%s\n", reply);
